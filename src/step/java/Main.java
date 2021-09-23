@@ -10,14 +10,20 @@ public class Main {
 
     public static void main(String[] args) {
 
-//        Library lib = new Library() ;
+        Library lib = new Library() ;
+        lib.addDirectoryAsync(
+                "./src/step/java/fs/",
+                lib::print
+        ) ;
+        System.out.println("--------");
+        lib.print() ;
+        System.out.println("--------");
+
         /*lib.add( new Journal( "Quantum Mechanics", "2021, 1" ) ) ;
         lib.add( new Book( "Martin Eden", "Jack London" ) ) ;
         lib.add( new Hologram( "Pectoral" ) ) ;
         lib.add( new Newspaper( "Times", new Date() ) ) ;
         */
-//        lib.addDirectory( "./src/step/java/fs/" ) ;
-//        lib.print() ;
         // CreateFiles creator = new CreateFiles() ;
         // creator.showDir() ;
         // creator.createBook() ;
@@ -25,7 +31,7 @@ public class Main {
                 "./src/step/java/fs/" +
                 "Jack London_Martin Eden.json"
         ));*/
-        new Threads().demo() ;
+        // new Threads().demo3() ;
     }
 }
 /*
