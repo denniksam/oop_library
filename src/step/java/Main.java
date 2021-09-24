@@ -1,5 +1,6 @@
 package step.java;
 
+import step.java.excercises.Db;
 import step.java.excercises.Threads;
 import step.java.fs.CreateFiles;
 import step.java.library.*;
@@ -9,7 +10,7 @@ import java.util.Date;
 public class Main {
 
     public static void main(String[] args) {
-
+/*
         Library lib = new Library() ;
         lib.addDirectoryAsync(
                 "./src/step/java/fs/",
@@ -18,7 +19,7 @@ public class Main {
         System.out.println("--------");
         lib.print() ;
         System.out.println("--------");
-
+*/
         /*lib.add( new Journal( "Quantum Mechanics", "2021, 1" ) ) ;
         lib.add( new Book( "Martin Eden", "Jack London" ) ) ;
         lib.add( new Hologram( "Pectoral" ) ) ;
@@ -32,6 +33,7 @@ public class Main {
                 "Jack London_Martin Eden.json"
         ));*/
         // new Threads().demo3() ;
+        new Db().demo() ;
     }
 }
 /*
