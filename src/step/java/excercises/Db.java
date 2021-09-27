@@ -12,8 +12,8 @@ public class Db {
     private final String PREFIX = "KH181_0_" ;
 
     public void demo() {
-        // Loading config: ../config/db.json
-        File file = new File( "./src/step/java/config/db.json") ;
+        // Loading config: ../config/db2.json
+        File file = new File( "./src/step/java/config/db2.json") ;
         if( ! file.exists() ) {
             System.err.println( "Config location error" ) ;
             return ;
@@ -21,10 +21,9 @@ public class Db {
         JSONObject conf ;
         String connectionString ;
         try {
-            conf = new JSONObject(
-                    new String(
-                            new FileInputStream(file)
-                                    .readAllBytes()));
+            byte[] buf = new byte[ (int) file.length() ] ;
+            new FileInputStream( file ).read( buf ) ;
+            conf = new JSONObject( new String( buf ) ) ;
             connectionString = String.format (
                     "jdbc:oracle:thin:%s/%s@%s:%d:XE",
                     conf.getString( "user" ),
@@ -36,7 +35,7 @@ public class Db {
             System.err.println( ex.getMessage() ) ;
             return ;
         }
-
+        System.out.println( connectionString ) ;
         Connection connection ;  // ~SqlConnection
         try {
             // Registering driver
