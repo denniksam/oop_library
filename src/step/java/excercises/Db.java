@@ -6,13 +6,153 @@ import javax.xml.bind.DatatypeConverter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.*;
+import java.util.Scanner;
 
 public class Db {
 
     private final String PREFIX = "KH181_0_" ;
+
+    private static Connection connection ;
+
+    public Connection getConnection() {
+        if( connection == null ) {
+            // Loading config: ../config/db.json
+            File file = new File( "./src/step/java/config/db.json") ;
+            if( ! file.exists() ) {
+                System.err.println( "Config location error" ) ;
+                return null ;
+            }
+            JSONObject conf ;
+            String connectionString ;
+            try( InputStream reader = new FileInputStream( file ) ) {
+                int length = (int) file.length() ;
+                byte[] buf = new byte[ length ] ;
+                if( length != reader.read( buf ) ) {
+                    throw new IOException( "Not all bytes read" ) ;
+                }
+                conf = new JSONObject( new String( buf ) ) ;
+                connectionString = String.format (
+                        "jdbc:oracle:thin:%s/%s@%s:%d:XE",
+                        conf.getString( "user" ),
+                        conf.getString( "pass" ),
+                        conf.getString( "host" ),
+                        conf.getInt( "port" )
+                ) ;
+            } catch( IOException ex ) {
+                System.err.println( ex.getMessage() ) ;
+                return null ;
+            }
+
+            try {
+                // Registering driver
+                DriverManager.registerDriver(
+                        // Don't forget add OJDBC8.JAR library
+                        new oracle.jdbc.driver.OracleDriver()
+                );
+                // Connecting...
+                connection = DriverManager.getConnection(
+                        connectionString
+                ) ;
+            } catch( SQLException ex ) {
+                System.err.println( ex.getMessage() ) ;
+                return null ;
+            }
+        }
+        return connection ;
+    }
+
+    public void register_xe() {
+        System.out.println( "-=REGISTRATION=-" ) ;
+        Scanner scanner = new Scanner( System.in ) ;
+        String login ;
+        try( PreparedStatement prep = getConnection().prepareStatement(
+                "SELECT U.id FROM " + PREFIX + "users U WHERE U.login=?"
+        ) ) {
+            do {
+                login = scanner.nextLine() ;
+                prep.setString( 1, login ) ;
+            } while( prep.executeQuery().next() ) ;
+        } catch( Exception ex ) {
+            System.err.println( ex.getMessage() ) ;
+        }
+
+    }
+
+    public void login_xe() {
+        System.out.print( "Login/Password: " ) ;
+        Scanner scanner = new Scanner( System.in ) ;
+        String userInput = scanner.nextLine() ;
+        String[] authData = userInput.split( "/" ) ;
+        // System.out.println( authData[0] + " " + authData[1] ) ;
+        if( authData.length != 2 ) {
+            System.out.println( "Invalid input format" ) ;
+        } else {
+            try( PreparedStatement prep = getConnection().prepareStatement(
+                "SELECT U.* FROM " + PREFIX + "users U WHERE U.login=? "
+            ) ) {
+                prep.setString( 1, authData[0] ) ;
+                ResultSet res = prep.executeQuery() ;
+                if( res.next() ) {
+                    String salt = res.getString( "PASS_SALT" ) ;
+                    String hash = res.getString( "PASS_HASH" ) ;
+                    String pass = hash( salt + authData[1] ) ;
+                    // System.out.println(pass + "\n" + hash ) ;
+                    if( pass.equals( hash ) ) {
+                        System.out.println( "Welcome, " + res.getString( "NAME" ) ) ;
+                    }
+                    else {
+                        System.out.println( "Access denied!" ) ;
+                    }
+                } else {
+                    System.out.println( "Login unknown" ) ;
+                }
+            } catch( Exception ex ) {
+                System.err.println( ex.getMessage() ) ;
+            }
+        }
+    }
+
+    public void auth_xe() {
+        String query = null ;
+        try( Statement statement = getConnection().createStatement() ) {
+            query = "CREATE TABLE " + PREFIX + "users (" +
+                    "id RAW(16) DEFAULT SYS_GUID() PRIMARY KEY," +
+                    "login NVARCHAR2(64) NOT NULL," +
+                    "name NVARCHAR2(64)," +
+                    "pass_salt CHAR(40)," +
+                    "pass_hash CHAR(40) ) " ;
+            statement.executeUpdate( query ) ;
+
+            PreparedStatement prep = getConnection().prepareStatement(
+                "INSERT INTO " + PREFIX + "users (login, name,pass_salt,pass_hash) " +
+                    "VALUES(?, ?, ?, ?)" ) ;
+            String name = "Petrovich" ;
+            String salt = hash( name ) ;
+            String pass = hash( salt + "123" ) ;
+            prep.setString( 1, "user1" ) ;
+            prep.setString( 2, name ) ;
+            prep.setString( 3, salt ) ;
+            prep.setString( 4, pass ) ;
+            prep.executeUpdate() ;
+
+            name = "Lukich" ;
+            salt = hash( name ) ;
+            pass = hash( salt + "321" ) ;
+            prep.setString( 1, "user2" ) ;
+            prep.setString( 2, name ) ;
+            prep.setString( 3, salt ) ;
+            prep.setString( 4, pass ) ;
+            prep.executeUpdate() ;
+
+        } catch( SQLException ex ) {
+            System.err.println( ex.getMessage() + " : " + query ) ;
+            return ;
+        }
+    }
 
     public void auth_maria() {
         // User authorization demo
@@ -22,6 +162,7 @@ public class Db {
         String str = hash( "123" ) ;
         System.out.println( str ) ;
         System.out.println( str.length() ) ;
+
     }
 
     public String hash( String str ) {
@@ -54,7 +195,7 @@ public class Db {
      */
     public void demo_xe() {
         // Loading config: ../config/db2.json
-        File file = new File( "./src/step/java/config/db2.json") ;
+        File file = new File( "./src/step/java/config/db.json") ;
         if( ! file.exists() ) {
             System.err.println( "Config location error" ) ;
             return ;

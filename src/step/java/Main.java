@@ -35,7 +35,9 @@ public class Main {
         // new Threads().demo3() ;
         // new Db().demo_xe() ;
         // new Db().demo_maria() ;
-        new Db().auth_maria() ;
+        // new Db().auth_maria() ;
+        // new Db().auth_xe() ;
+        new Db().login_xe() ;
     }
 }
 /*
